@@ -23,8 +23,8 @@ O projeto foi desenvolvido como entrega do **Tech Challenge — Fase 2**, simula
 - [13. Aplicações em inteligência artificial](#13-aplicações-em-inteligência-artificial)
 - [14. Estrutura do repositório](#14-estrutura-do-repositório)
 - [15. Como executar](#15-como-executar)
-- [16. Resultados da execução](#16-resultados-da-execução)
-- [17. Estratégia de Git](#17-estratégia-de-git) (a execução com evidências de cada notebook está aqui!)
+- [16. Resultados da execução](#16-resultados-da-execução) (a execução com evidências de cada notebook está aqui!)
+- [17. Estratégia de Git](#17-estratégia-de-git)
 - [18. Limitações e evoluções futuras](#18-limitações-e-evoluções-futuras)
 - [19. Referências](#19-referências)
 
@@ -738,7 +738,9 @@ Principais evidências da execução:
 - criação das tabelas `pipeline_runs`, `data_quality_results` e `table_metrics`;
 - validação dos objetos criados no Unity Catalog.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 00](COLE_AQUI_O_LINK_DO_VIDEO_00)
+**Vídeo de evidência:** 
+
+https://github.com/user-attachments/assets/609bf545-ccfb-47ba-8ee0-2424c1e2bbec
 
 ---
 
@@ -759,7 +761,10 @@ Principais evidências da execução:
 - inclusão de metadados de ingestão;
 - persistência do resultado em `pipeline_runs`.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 01](COLE_AQUI_O_LINK_DO_VIDEO_01)
+**Vídeo de evidência:** 
+
+https://github.com/user-attachments/assets/462bcd3b-71fe-4bad-a6ea-774a8326e373
+
 
 ---
 
@@ -781,7 +786,11 @@ Principais evidências da execução:
 - gravação da tabela `eventos_indicador_stream`;
 - preservação do checkpoint do streaming.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 02](COLE_AQUI_O_LINK_DO_VIDEO_02)
+**Vídeo de evidência:** 
+
+https://github.com/user-attachments/assets/51b53e1a-d600-4e9b-9137-bb7906a57960
+
+<img width="1480" height="893" alt="02_ingestao_streaming_bronzed_evidencia_foto" src="https://github.com/user-attachments/assets/54b80487-bdec-46ff-b7a7-48cf4d124b1d" />
 
 ---
 
@@ -805,7 +814,8 @@ Principais evidências da execução:
 - integração dos dados batch e streaming;
 - criação das tabelas fato e dimensão da camada Silver.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 03](COLE_AQUI_O_LINK_DO_VIDEO_03)
+**Vídeo de evidência:** 
+
 
 ---
 
