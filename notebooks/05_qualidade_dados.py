@@ -506,17 +506,32 @@ municipios = spark.table(
     f"{CATALOG}.{SILVER_SCHEMA}.dim_municipio"
 )
 
-total_alunos = alunos.count()
-
-orphan_students = (
-    alunos.select("id_municipio")
+student_municipalities = (
+    alunos
+    .select("id_municipio")
+    .filter(
+        F.col("id_municipio").isNotNull()
+    )
     .distinct()
+)
+
+orphan_student_df = (
+    student_municipalities
     .join(
         municipios.select("id_municipio").distinct(),
         on="id_municipio",
         how="left_anti",
     )
-    .count()
+)
+
+orphan_student_ids = [
+    row["id_municipio"]
+    for row in orphan_student_df.limit(20).collect()
+]
+
+orphan_students = orphan_student_df.count()
+total_student_municipalities = (
+    student_municipalities.count()
 )
 
 add_result(
@@ -529,7 +544,15 @@ add_result(
     ),
     "ERROR",
     orphan_students,
-    total_alunos,
+    total_student_municipalities,
+    (
+        "Municípios órfãos: "
+        + (
+            ", ".join(orphan_student_ids)
+            if orphan_student_ids
+            else "nenhum"
+        )
+    ),
 )
 
 metas_municipio = spark.table(
@@ -537,17 +560,32 @@ metas_municipio = spark.table(
     "meta_alfabetizacao_municipio"
 )
 
-total_metas = metas_municipio.count()
-
-orphan_targets = (
-    metas_municipio.select("id_municipio")
+target_municipalities = (
+    metas_municipio
+    .select("id_municipio")
+    .filter(
+        F.col("id_municipio").isNotNull()
+    )
     .distinct()
+)
+
+orphan_target_df = (
+    target_municipalities
     .join(
         municipios.select("id_municipio").distinct(),
         on="id_municipio",
         how="left_anti",
     )
-    .count()
+)
+
+orphan_target_ids = [
+    row["id_municipio"]
+    for row in orphan_target_df.limit(20).collect()
+]
+
+orphan_targets = orphan_target_df.count()
+total_target_municipalities = (
+    target_municipalities.count()
 )
 
 add_result(
@@ -560,7 +598,15 @@ add_result(
     ),
     "ERROR",
     orphan_targets,
-    total_metas,
+    total_target_municipalities,
+    (
+        "Municípios órfãos: "
+        + (
+            ", ".join(orphan_target_ids)
+            if orphan_target_ids
+            else "nenhum"
+        )
+    ),
 )
 
 # COMMAND ----------

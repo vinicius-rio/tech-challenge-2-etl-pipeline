@@ -447,6 +447,11 @@ alunos_selected = bronze_alunos.select(
         ["sigla_uf", "uf", "sg_uf"],
         "sigla_uf_origem",
     ),
+    string_expr(
+        bronze_alunos,
+        ["nome_municipio", "municipio", "no_municipio"],
+        "nome_municipio",
+    ),
 )
 
 silver_alunos = (
@@ -1005,14 +1010,66 @@ silver_events = add_processing_metadata(
 
 # COMMAND ----------
 
-dim_municipio = (
+dim_municipio_oficial = (
     silver_municipio
     .select(
         "id_municipio",
         "nome_municipio",
         "sigla_uf",
     )
+    .withColumn(
+        "_source_priority",
+        F.lit(1),
+    )
+)
+
+dim_municipio_alunos = (
+    silver_alunos
+    .select(
+        "id_municipio",
+        "nome_municipio",
+        "sigla_uf",
+    )
+    .filter(
+        F.col("id_municipio").isNotNull()
+    )
     .dropDuplicates(["id_municipio"])
+    .withColumn(
+        "_source_priority",
+        F.lit(2),
+    )
+)
+
+dim_municipio_union = (
+    dim_municipio_oficial
+    .unionByName(
+        dim_municipio_alunos,
+        allowMissingColumns=True,
+    )
+)
+
+dim_municipio_window = Window.partitionBy(
+    "id_municipio"
+).orderBy(
+    F.col("_source_priority").asc(),
+    F.col("nome_municipio").isNull().asc(),
+)
+
+dim_municipio = (
+    dim_municipio_union
+    .withColumn(
+        "_row_number",
+        F.row_number().over(
+            dim_municipio_window
+        ),
+    )
+    .filter(
+        F.col("_row_number") == 1
+    )
+    .drop(
+        "_row_number",
+        "_source_priority",
+    )
 )
 
 dim_municipio = add_processing_metadata(
