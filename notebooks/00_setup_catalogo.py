@@ -2,14 +2,8 @@
 # MAGIC %md
 # MAGIC # 00 — Configuração inicial do projeto
 # MAGIC
-# MAGIC Este notebook prepara a estrutura lógica da pipeline:
-# MAGIC
-# MAGIC - camada Bronze;
-# MAGIC - camada Silver;
-# MAGIC - camada Gold;
-# MAGIC - camada de monitoramento;
-# MAGIC - Volume para arquivos de entrada;
-# MAGIC - Volume para checkpoints de streaming.
+# MAGIC Cria a estrutura lógica da Arquitetura Medalhão, os Volumes usados
+# MAGIC pela ingestão e as tabelas de monitoramento da pipeline.
 
 # COMMAND ----------
 
@@ -17,8 +11,6 @@ from datetime import datetime, timezone
 
 PROJECT_NAME = "alfabetizacao"
 
-# Utiliza o catálogo atual do workspace.
-# Isso evita depender da permissão de criação de um novo catálogo.
 CATALOG = spark.sql(
     "SELECT current_catalog() AS catalog"
 ).first()["catalog"]
@@ -31,128 +23,160 @@ SCHEMAS = {
 }
 
 print(f"Catálogo utilizado: {CATALOG}")
-print(f"Data da configuração: {datetime.now(timezone.utc).isoformat()}")
-
-for layer, schema_name in SCHEMAS.items():
-    print(f"{layer}: {CATALOG}.{schema_name}")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Criação dos schemas
+print(f"Execução iniciada em: {datetime.now(timezone.utc).isoformat()}")
 
 # COMMAND ----------
 
 SCHEMA_COMMENTS = {
-    "bronze": "Dados brutos ingeridos das fontes batch e streaming.",
-    "silver": "Dados tratados, padronizados, validados e integrados.",
-    "gold": "Datasets analíticos preparados para consultas e visualizações.",
-    "monitoring": "Métricas de execução, qualidade e observabilidade da pipeline.",
+    "bronze": "Dados brutos ingeridos por processos batch e streaming.",
+    "silver": "Dados limpos, tipados, padronizados, validados e integrados.",
+    "gold": "Datasets analíticos preparados para consumo e inteligência artificial.",
+    "monitoring": "Métricas operacionais, qualidade e observabilidade da pipeline.",
 }
 
 for layer, schema_name in SCHEMAS.items():
-    comment = SCHEMA_COMMENTS[layer]
-
     spark.sql(
         f"""
         CREATE SCHEMA IF NOT EXISTS `{CATALOG}`.`{schema_name}`
-        COMMENT '{comment}'
+        COMMENT '{SCHEMA_COMMENTS[layer]}'
         """
     )
-
-    print(f"Schema criado ou validado: {CATALOG}.{schema_name}")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Criação dos Volumes
+    print(f"Schema validado: {CATALOG}.{schema_name}")
 
 # COMMAND ----------
 
-VOLUMES = {
-    "landing": {
+VOLUMES = [
+    {
         "schema": SCHEMAS["bronze"],
-        "description": "Arquivos originais recebidos das fontes de dados.",
+        "name": "landing",
+        "comment": "Arquivos históricos recebidos da Base dos Dados.",
     },
-    "checkpoints": {
+    {
+        "schema": SCHEMAS["bronze"],
+        "name": "streaming_input",
+        "comment": "Arquivos JSON que simulam a chegada de eventos em tempo quase real.",
+    },
+    {
         "schema": SCHEMAS["monitoring"],
-        "description": "Checkpoints utilizados pelo Spark Structured Streaming.",
+        "name": "checkpoints",
+        "comment": "Checkpoints do Spark Structured Streaming.",
     },
-}
+]
 
-for volume_name, config in VOLUMES.items():
-    schema_name = config["schema"]
-
+for volume in VOLUMES:
     spark.sql(
         f"""
         CREATE VOLUME IF NOT EXISTS
-        `{CATALOG}`.`{schema_name}`.`{volume_name}`
-        COMMENT '{config["description"]}'
+        `{CATALOG}`.`{volume["schema"]}`.`{volume["name"]}`
+        COMMENT '{volume["comment"]}'
         """
     )
-
     print(
-        "Volume criado ou validado: "
-        f"{CATALOG}.{schema_name}.{volume_name}"
+        "Volume validado: "
+        f'{CATALOG}.{volume["schema"]}.{volume["name"]}'
     )
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## Caminhos utilizados pela pipeline
+MONITORING_SCHEMA = SCHEMAS["monitoring"]
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS
+    `{CATALOG}`.`{MONITORING_SCHEMA}`.`pipeline_runs` (
+        run_id STRING,
+        notebook STRING,
+        layer STRING,
+        start_timestamp TIMESTAMP,
+        end_timestamp TIMESTAMP,
+        duration_seconds DOUBLE,
+        status STRING,
+        records_read BIGINT,
+        records_written BIGINT,
+        message STRING,
+        created_at TIMESTAMP
+    )
+    USING DELTA
+    COMMENT 'Histórico de execuções dos notebooks da pipeline.'
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS
+    `{CATALOG}`.`{MONITORING_SCHEMA}`.`data_quality_results` (
+        execution_id STRING,
+        table_layer STRING,
+        table_name STRING,
+        rule_name STRING,
+        rule_description STRING,
+        severity STRING,
+        status STRING,
+        invalid_records BIGINT,
+        total_records BIGINT,
+        conformity_percentage DOUBLE,
+        details STRING,
+        executed_at TIMESTAMP
+    )
+    USING DELTA
+    COMMENT 'Resultados das regras de qualidade de dados.'
+    """
+)
+
+spark.sql(
+    f"""
+    CREATE TABLE IF NOT EXISTS
+    `{CATALOG}`.`{MONITORING_SCHEMA}`.`table_metrics` (
+        execution_id STRING,
+        table_layer STRING,
+        table_name STRING,
+        row_count BIGINT,
+        column_count INT,
+        num_files BIGINT,
+        size_in_bytes BIGINT,
+        collected_at TIMESTAMP
+    )
+    USING DELTA
+    COMMENT 'Snapshot de volume, quantidade de colunas e tamanho físico das tabelas.'
+    """
+)
+
+print("Tabelas de monitoramento criadas ou validadas.")
 
 # COMMAND ----------
 
 LANDING_PATH = (
-    f"/Volumes/{CATALOG}/"
-    f"{SCHEMAS['bronze']}/landing"
+    f"/Volumes/{CATALOG}/{SCHEMAS['bronze']}/landing"
+)
+
+STREAMING_INPUT_PATH = (
+    f"/Volumes/{CATALOG}/{SCHEMAS['bronze']}/streaming_input"
 )
 
 CHECKPOINT_PATH = (
-    f"/Volumes/{CATALOG}/"
-    f"{SCHEMAS['monitoring']}/checkpoints"
+    f"/Volumes/{CATALOG}/{SCHEMAS['monitoring']}/checkpoints"
 )
 
-print(f"Landing path: {LANDING_PATH}")
-print(f"Checkpoint path: {CHECKPOINT_PATH}")
+print(f"Landing: {LANDING_PATH}")
+print(f"Streaming input: {STREAMING_INPUT_PATH}")
+print(f"Checkpoints: {CHECKPOINT_PATH}")
 
 # COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Validação dos schemas criados
-
-# COMMAND ----------
-
-schemas_df = spark.sql(f"SHOW SCHEMAS IN `{CATALOG}`")
 
 display(
-    schemas_df.filter(
-        schemas_df.databaseName.isin(list(SCHEMAS.values()))
-    )
+    spark.sql(f"SHOW SCHEMAS IN `{CATALOG}`")
+    .filter(f"databaseName LIKE '{PROJECT_NAME}_%'")
 )
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## Validação dos Volumes
-
-# COMMAND ----------
 
 display(
     spark.sql(
-        f"""
-        SHOW VOLUMES IN
-        `{CATALOG}`.`{SCHEMAS['bronze']}`
-        """
+        f"SHOW VOLUMES IN `{CATALOG}`.`{SCHEMAS['bronze']}`"
     )
 )
 
 display(
     spark.sql(
-        f"""
-        SHOW VOLUMES IN
-        `{CATALOG}`.`{SCHEMAS['monitoring']}`
-        """
+        f"SHOW VOLUMES IN `{CATALOG}`.`{SCHEMAS['monitoring']}`"
     )
 )
 
