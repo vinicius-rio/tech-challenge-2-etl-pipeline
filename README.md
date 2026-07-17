@@ -4,8 +4,6 @@ Pipeline de engenharia de dados desenvolvida no **Databricks** para integrar dad
 
 O projeto foi desenvolvido como entrega do **Tech Challenge — Fase 2**, simulando uma solução de dados em nuvem para apoiar análises sobre alfabetização infantil, desigualdades territoriais e acompanhamento de metas educacionais.
 
----
-
 ## Sumário
 
 - [1. Contexto do problema](#1-contexto-do-problema)
@@ -816,6 +814,10 @@ Principais evidências da execução:
 
 **Vídeo de evidência:** 
 
+https://github.com/user-attachments/assets/f1fac543-c04c-4a21-8440-be5ef23ed218
+
+
+
 
 ---
 
@@ -839,7 +841,11 @@ Principais evidências da execução:
 - cálculo da diferença para a meta;
 - classificação do cumprimento das metas.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 04](COLE_AQUI_O_LINK_DO_VIDEO_04)
+**Vídeo de evidência:** 
+
+https://github.com/user-attachments/assets/4a4066c2-2f47-4013-ba11-9369ef6102d3
+
+
 
 ---
 
@@ -864,7 +870,11 @@ Principais evidências da execução:
 - registro do percentual de conformidade;
 - persistência do histórico das regras.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 05](COLE_AQUI_O_LINK_DO_VIDEO_05)
+**Vídeo de evidência:** 
+
+https://github.com/user-attachments/assets/da103619-7fae-49f0-bd37-76493e5afe1e
+
+
 
 ---
 
@@ -887,7 +897,11 @@ Principais evidências da execução:
 - consolidação das métricas de FinOps;
 - histórico transacional da ingestão streaming.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 06](COLE_AQUI_O_LINK_DO_VIDEO_06)
+**Vídeo de evidência:** 
+
+https://github.com/user-attachments/assets/d04270c0-8e5a-4833-b912-5afdb2fbe54a
+
+
 
 ---
 
@@ -910,7 +924,10 @@ Principais evidências da execução:
 - visualização da base preparada para machine learning;
 - criação de views reutilizáveis no Databricks SQL.
 
-**Vídeo de evidência:** [Assistir à execução do notebook 07](COLE_AQUI_O_LINK_DO_VIDEO_07)
+**Vídeo de evidência:** 
+
+https://github.com/user-attachments/assets/a15f0342-e3c2-41e2-9f98-3b3eebd40a1d
+
 
 ---
 
@@ -949,8 +966,6 @@ Destaques:
 | `base_modelagem_municipio` | 24.018 |
 
 As quantidades podem variar se as fontes forem atualizadas ou se novos eventos forem adicionados.
-
-> Substitua os textos `COLE_AQUI_O_LINK_DO_VIDEO_XX` pelos links públicos ou compartilháveis antes da entrega.
 
 ---
 
