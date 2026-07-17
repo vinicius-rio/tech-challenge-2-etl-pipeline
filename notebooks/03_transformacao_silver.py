@@ -373,55 +373,58 @@ bronze_alunos = normalize_columns(
     )
 )
 
+print("Colunas normalizadas da Bronze alunos:")
+print(bronze_alunos.columns)
+
 alunos_selected = bronze_alunos.select(
     int_expr(
         bronze_alunos,
-        ["ano", "ano_referencia"],
+        ["ano", "ano_referencia", "nu_ano_avaliacao"],
         "ano",
     ),
     string_expr(
         bronze_alunos,
-        ["id_municipio", "codigo_municipio"],
+        ["id_municipio", "codigo_municipio", "co_municipio"],
         "id_municipio",
     ),
     string_expr(
         bronze_alunos,
-        ["id_escola", "codigo_escola"],
+        ["id_escola", "codigo_escola", "co_escola"],
         "id_escola",
     ),
     string_expr(
         bronze_alunos,
-        ["id_aluno", "codigo_aluno"],
+        ["id_aluno", "codigo_aluno", "co_aluno"],
         "id_aluno",
     ),
     string_expr(
         bronze_alunos,
-        ["caderno"],
+        ["caderno", "co_caderno_lp"],
         "caderno",
     ),
     string_expr(
         bronze_alunos,
-        ["serie", "ano_escolar"],
+        ["serie", "ano_escolar", "tp_serie"],
         "serie",
     ),
     string_expr(
         bronze_alunos,
-        ["rede", "dependencia_administrativa"],
+        ["rede", "dependencia_administrativa", "tp_dependencia"],
         "rede",
     ),
     boolean_expr(
         bronze_alunos,
-        ["presenca", "presente"],
+        ["presenca", "presente", "in_presenca_lp"],
         "presenca",
     ),
     string_expr(
         bronze_alunos,
-        ["preenchimento_caderno"],
+        ["preenchimento_caderno", "in_preenchimento_lp"],
         "preenchimento_caderno",
     ),
     boolean_expr(
         bronze_alunos,
-        ["alfabetizado", "crianca_alfabetizada"],
+        ["alfabetizado", "crianca_alfabetizada", "in_alfabetizado"],
         "alfabetizado",
     ),
     double_expr(
@@ -429,14 +432,20 @@ alunos_selected = bronze_alunos.select(
         [
             "proficiencia",
             "proficiencia_lingua_portuguesa",
+            "vl_proficiencia_lp",
             "nota",
         ],
         "proficiencia",
     ),
     double_expr(
         bronze_alunos,
-        ["peso_aluno", "peso"],
+        ["peso_aluno", "peso", "vl_peso_aluno_lp"],
         "peso_aluno",
+    ),
+    string_expr(
+        bronze_alunos,
+        ["sigla_uf", "uf", "sg_uf"],
+        "sigla_uf_origem",
     ),
 )
 
@@ -456,8 +465,12 @@ silver_alunos = (
     )
     .withColumn(
         "sigla_uf",
-        uf_from_municipio("id_municipio"),
+        F.coalesce(
+            F.upper(F.col("sigla_uf_origem")),
+            uf_from_municipio("id_municipio"),
+        ),
     )
+    .drop("sigla_uf_origem")
     .filter(
         F.col("ano").isNotNull()
         & F.col("id_municipio").isNotNull()

@@ -174,6 +174,22 @@ def check_nulls(
 
     total = df.count()
 
+    if total == 0:
+        add_result(
+            layer,
+            table_name,
+            "completeness",
+            (
+                "A completude não pode ser validada porque "
+                "a tabela está vazia."
+            ),
+            "ERROR",
+            1,
+            1,
+            "Tabela sem registros.",
+        )
+        return
+
     invalid_condition = None
 
     for column in existing_columns:
