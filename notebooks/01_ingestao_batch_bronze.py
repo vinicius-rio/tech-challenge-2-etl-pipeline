@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # 01 — Ingestão batch para a camada Bronze
 # MAGIC
@@ -69,6 +73,30 @@ DATASETS = {
     ),
 }
 
+CSV_SEPARATORS = {
+    "alunos.csv": ";",
+    (
+        "br_inep_avaliacao_alfabetizacao_"
+        "meta_alfabetizacao_brasil.csv.gz"
+    ): ",",
+    (
+        "br_inep_avaliacao_alfabetizacao_"
+        "meta_alfabetizacao_municipio.csv.gz"
+    ): ",",
+    (
+        "br_inep_avaliacao_alfabetizacao_"
+        "meta_alfabetizacao_uf.csv.gz"
+    ): ",",
+    (
+        "br_inep_avaliacao_alfabetizacao_"
+        "municipio.csv.gz"
+    ): ",",
+    (
+        "br_inep_avaliacao_alfabetizacao_"
+        "uf.csv.gz"
+    ): ",",
+}
+
 print(f"Catálogo: {CATALOG}")
 print(f"Landing: {LANDING_PATH}")
 print(f"Run ID: {RUN_ID}")
@@ -118,18 +146,26 @@ print("\nTodos os seis arquivos obrigatórios foram encontrados.")
 
 def read_csv_as_raw(file_name: str) -> DataFrame:
     """
-    Lê CSV ou CSV.GZ sem inferir tipos.
+    Lê arquivos CSV ou CSV.GZ preservando os valores
+    originais como strings.
 
-    A camada Bronze preserva os valores recebidos e posterga
-    conversões de tipo e regras de negócio para a Silver.
+    A base de alunos utiliza ponto e vírgula como
+    separador; as demais utilizam vírgula.
     """
 
     file_path = f"{LANDING_PATH}/{file_name}"
+    separator = CSV_SEPARATORS.get(file_name, ",")
+
+    print(
+        f"Lendo {file_name} com separador "
+        f"{repr(separator)}"
+    )
 
     raw_df = (
         spark.read
         .format("csv")
         .option("header", "true")
+        .option("sep", separator)
         .option("inferSchema", "false")
         .option("encoding", "UTF-8")
         .option("mode", "PERMISSIVE")
