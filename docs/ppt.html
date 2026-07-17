@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipeline Híbrido para Análise da Alfabetização no Brasil</title>
+  <style>
+    :root {
+      --fiap: #ed145b;
+      --fiap-2: #ff4b86;
+      --ink: #050505;
+      --ink-2: #0d0d10;
+      --paper: #f5f4f2;
+      --white: #ffffff;
+      --muted: #a6a6ad;
+      --line: rgba(255,255,255,.14);
+      --green: #7dffb2;
+      --yellow: #ffd166;
+      --cyan: #77e4ff;
+      --shadow: 0 30px 80px rgba(0,0,0,.42);
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      color: var(--white);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    body { user-select: none; }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 18% 22%, rgba(237,20,91,.13), transparent 34%),
+        radial-gradient(circle at 84% 80%, rgba(237,20,91,.08), transparent 32%),
+        #000;
+    }
+
+    .deck {
+      position: relative;
+      width: 1600px;
+      height: 900px;
+      transform-origin: center center;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      background: var(--ink);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 62px 78px 58px;
+      background:
+        linear-gradient(130deg, rgba(255,255,255,.015), transparent 45%),
+        var(--ink);
+      overflow: hidden;
+    }
+
+    .slide.active { display: block; }
+
+    .grid-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.032) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: linear-gradient(to bottom, black, transparent 92%);
+      pointer-events: none;
+    }
+
+    .noise::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .08;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    .brand {
+      position: absolute;
+      top: 38px;
+      left: 78px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      z-index: 20;
+    }
+
+    .brand svg { width: 116px; height: auto; }
+    .brand-tag {
+      font-size: 13px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: #c6c6cb;
+      padding-left: 18px;
+      border-left: 1px solid rgba(255,255,255,.22);
+    }
+
+    .slide-no {
+      position: absolute;
+      right: 78px;
+      top: 42px;
+      font-size: 13px;
+      color: #8f8f97;
+      letter-spacing: .2em;
+      z-index: 20;
+    }
+
+    .eyebrow {
+      color: var(--fiap);
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      font-size: 86px;
+      line-height: .96;
+      letter-spacing: -.05em;
+      font-weight: 900;
+      max-width: 1320px;
+      margin-bottom: 28px;
+    }
+    h2 {
+      font-size: 62px;
+      line-height: 1.02;
+      letter-spacing: -.045em;
+      font-weight: 900;
+      max-width: 1250px;
+      margin-bottom: 22px;
+    }
+    h3 {
+      font-size: 27px;
+      line-height: 1.15;
+      letter-spacing: -.02em;
+      font-weight: 800;
+    }
+    .lead {
+      font-size: 27px;
+      line-height: 1.42;
+      color: #d7d7db;
+      max-width: 1080px;
+    }
+    .muted { color: var(--muted); }
+    .pink { color: var(--fiap); }
+    .white { color: white; }
+
+    .accent-line {
+      width: 82px;
+      height: 7px;
+      background: var(--fiap);
+      margin-bottom: 28px;
+    }
+
+    .footer {
+      position: absolute;
+      left: 78px;
+      right: 78px;
+      bottom: 31px;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      color: #7d7d85;
+      font-size: 12px;
+      letter-spacing: .06em;
+      z-index: 20;
+    }
+
+    .hero-content {
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 40px;
+      z-index: 2;
+    }
+
+    .cover-orb {
+      position: absolute;
+      width: 610px;
+      height: 610px;
+      right: -40px;
+      top: 155px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 32% 24%, rgba(255,255,255,.95), rgba(255,255,255,.08) 8%, transparent 9%),
+        radial-gradient(circle at 52% 48%, rgba(237,20,91,.85), rgba(237,20,91,.2) 34%, rgba(237,20,91,.05) 62%, transparent 70%);
+      filter: saturate(1.1);
+      box-shadow:
+        0 0 100px rgba(237,20,91,.24),
+        inset -40px -40px 100px rgba(0,0,0,.72),
+        inset 20px 20px 60px rgba(255,255,255,.08);
+      opacity: .9;
+    }
+    .cover-orb::after {
+      content: "";
+      position: absolute;
+      inset: 65px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 0 0 35px rgba(255,255,255,.025), 0 0 0 90px rgba(255,255,255,.018);
+    }
+    .cover-orbit {
+      position: absolute;
+      width: 830px;
+      height: 270px;
+      right: -115px;
+      top: 327px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      transform: rotate(-19deg);
+    }
+    .cover-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      width: fit-content;
+      font-size: 14px;
+      color: #d7d7dc;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .cover-kicker::before {
+      content: "";
+      width: 36px;
+      height: 4px;
+      background: var(--fiap);
+    }
+    .cover-title { max-width: 1050px; }
+    .cover-subtitle {
+      font-size: 24px;
+      color: #bfc0c5;
+      max-width: 900px;
+      line-height: 1.4;
+    }
+    .presenter {
+      margin-top: 46px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 18px;
+      color: #e9e9ec;
+    }
+    .presenter-badge {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--fiap);
+      color: white;
+      font-weight: 900;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.06fr .94fr;
+      gap: 52px;
+      height: calc(100% - 76px);
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .problem-card {
+      background: linear-gradient(150deg, rgba(255,255,255,.075), rgba(255,255,255,.018));
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 26px;
+      padding: 34px;
+      min-height: 458px;
+      position: relative;
+      overflow: hidden;
+    }
+    .problem-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: var(--fiap);
+    }
+    .big-number {
+      font-size: 126px;
+      font-weight: 900;
+      letter-spacing: -.07em;
+      line-height: .9;
+      color: white;
+      margin: 14px 0 22px;
+    }
+    .metric-label {
+      font-size: 21px;
+      line-height: 1.35;
+      color: #d2d2d8;
+      max-width: 490px;
+    }
+    .metric-foot {
+      position: absolute;
+      bottom: 30px;
+      left: 34px;
+      right: 30px;
+      font-size: 13px;
+      color: #8d8d96;
+    }
+
+    .challenge-list {
+      display: grid;
+      gap: 18px;
+      margin-top: 30px;
+    }
+    .challenge-item {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 16px;
+      align-items: center;
+      padding: 18px 20px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      background: rgba(255,255,255,.025);
+    }
+    .challenge-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(237,20,91,.12);
+      color: var(--fiap);
+      font-size: 21px;
+      font-weight: 900;
+    }
+    .challenge-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .challenge-text { font-size: 14px; line-height: 1.4; color: #a9a9b1; }
+
+    .arch-wrap {
+      position: relative;
+      z-index: 2;
+      margin-top: 26px;
+    }
+    .arch-row {
+      display: grid;
+      grid-template-columns: 1.05fr 48px 1.05fr 48px 1.18fr 48px 1.15fr 48px 1.1fr;
+      gap: 7px;
+      align-items: stretch;
+    }
+    .arch-card {
+      min-height: 305px;
+      padding: 25px 22px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,.13);
+      background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.018));
+      position: relative;
+      overflow: hidden;
+    }
+    .arch-card.highlight {
+      border-color: rgba(237,20,91,.55);
+      box-shadow: 0 0 45px rgba(237,20,91,.11);
+    }
+    .arch-card.highlight::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 5px;
+      background: var(--fiap);
+    }
+    .arch-label {
+      font-size: 13px;
+      color: var(--fiap);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+    .arch-title { font-size: 24px; font-weight: 900; margin-bottom: 16px; }
+    .arch-list { list-style: none; padding: 0; margin: 0; }
+    .arch-list li {
+      position: relative;
+      padding-left: 17px;
+      margin-bottom: 11px;
+      color: #bcbcc3;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .arch-list li::before {
+      content: "";
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--fiap);
+      left: 0;
+      top: .48em;
+    }
+    .arrow {
+      display: grid;
+      place-items: center;
+      color: var(--fiap);
+      font-size: 34px;
+      font-weight: 200;
+    }
+    .observability-bar {
+      margin-top: 23px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .obs-item {
+      border-radius: 15px;
+      padding: 15px 18px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.09);
+      font-size: 14px;
+      color: #b9b9c0;
+    }
+    .obs-item strong { color: white; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 36px;
+      position: relative;
+      z-index: 2;
+    }
+    .stat {
+      min-height: 212px;
+      padding: 26px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.035);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .stat strong {
+      font-size: 52px;
+      line-height: .95;
+      letter-spacing: -.05em;
+    }
+    .stat span { color: #b5b5bd; font-size: 16px; line-height: 1.35; }
+    .stat em {
+      font-style: normal;
+      color: var(--fiap);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: .14em;
+      font-weight: 900;
+    }
+    .stat.primary {
+      background: linear-gradient(150deg, var(--fiap), #a50643);
+      border-color: transparent;
+    }
+    .stat.primary em, .stat.primary span { color: rgba(255,255,255,.82); }
+
+    .pipeline-progress {
+      margin-top: 32px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+    }
+    .step {
+      padding: 15px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.1);
+      text-align: center;
+      font-size: 12px;
+      color: #a9a9b0;
+    }
+    .step b {
+      display: block;
+      font-size: 15px;
+      color: white;
+      margin-bottom: 5px;
+    }
+    .step.done { border-color: rgba(125,255,178,.4); background: rgba(125,255,178,.06); }
+    .step.done b::before { content: "✓ "; color: var(--green); }
+
+    .quality-layout {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 40px;
+      position: relative;
+      z-index: 2;
+      align-items: center;
+      height: calc(100% - 84px);
+    }
+    .quality-matrix {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .quality-card {
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: 18px;
+      padding: 20px;
+      background: rgba(255,255,255,.03);
+    }
+    .quality-card .q-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      color: var(--green);
+      background: rgba(125,255,178,.09);
+      margin-bottom: 15px;
+      font-weight: 900;
+    }
+    .quality-card h3 { font-size: 20px; margin-bottom: 8px; }
+    .quality-card p { color: #a8a8b0; font-size: 13px; line-height: 1.4; margin: 0; }
+
+    .case-panel {
+      min-height: 515px;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 82% 18%, rgba(237,20,91,.25), transparent 34%),
+        linear-gradient(160deg, rgba(255,255,255,.075), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .case-code {
+      font-size: 57px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+      color: var(--fiap);
+      margin: 18px 0 10px;
+    }
+    .case-city { font-size: 23px; font-weight: 800; }
+    .case-arrow {
+      height: 92px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: #d4d4d8;
+    }
+    .case-arrow .pill {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      font-size: 13px;
+    }
+    .case-result {
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(125,255,178,.08);
+      border: 1px solid rgba(125,255,178,.25);
+      color: #d9ffe8;
+      line-height: 1.45;
+      font-size: 15px;
+    }
+
+    .value-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-top: 38px;
+      position: relative;
+      z-index: 2;
+    }
+    .value-card {
+      min-height: 390px;
+      padding: 30px;
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(160deg, rgba(255,255,255,.065), rgba(255,255,255,.018));
+      position: relative;
+      overflow: hidden;
+    }
+    .value-card::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(237,20,91,.08);
+      right: -75px;
+      bottom: -75px;
+    }
+    .value-num {
+      font-size: 15px;
+      color: var(--fiap);
+      font-weight: 900;
+      letter-spacing: .14em;
+      margin-bottom: 46px;
+    }
+    .value-card h3 { font-size: 30px; margin-bottom: 17px; }
+    .value-card p { color: #b2b2ba; line-height: 1.48; font-size: 16px; }
+    .value-outcome {
+      position: absolute;
+      bottom: 28px;
+      left: 30px;
+      right: 30px;
+      font-size: 13px;
+      color: #dedee2;
+      border-top: 1px solid rgba(255,255,255,.1);
+      padding-top: 15px;
+    }
+
+    .ai-layout {
+      display: grid;
+      grid-template-columns: .92fr 1.08fr;
+      gap: 44px;
+      height: calc(100% - 80px);
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+    .ai-core {
+      position: relative;
+      height: 560px;
+      display: grid;
+      place-items: center;
+    }
+    .ai-circle {
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ff7ca9, var(--fiap) 38%, #6d082f 75%);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 900;
+      box-shadow: 0 0 90px rgba(237,20,91,.28);
+      z-index: 2;
+    }
+    .ai-ring {
+      position: absolute;
+      width: 440px;
+      height: 440px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.16);
+    }
+    .ai-node {
+      position: absolute;
+      width: 160px;
+      padding: 15px;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 15px;
+      background: #101014;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.35;
+      color: #c1c1c8;
+    }
+    .ai-node b { color: white; display: block; margin-bottom: 4px; }
+    .n1 { top: 20px; left: 200px; }
+    .n2 { right: 10px; top: 208px; }
+    .n3 { bottom: 24px; left: 210px; }
+    .n4 { left: 0; top: 214px; }
+
+    .ai-list { display: grid; gap: 16px; margin-top: 28px; }
+    .ai-item {
+      display: grid;
+      grid-template-columns: 55px 1fr;
+      gap: 16px;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.027);
+      border-radius: 16px;
+      padding: 17px;
+    }
+    .ai-item .ai-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: var(--fiap);
+      background: rgba(237,20,91,.1);
+      font-weight: 900;
+    }
+    .ai-item b { display: block; margin-bottom: 4px; }
+    .ai-item span { color: #aaaab2; font-size: 13px; line-height: 1.4; }
+    .guardrail {
+      margin-top: 20px;
+      padding: 15px 18px;
+      border-left: 4px solid var(--yellow);
+      background: rgba(255,209,102,.055);
+      color: #d7d1bf;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .closing {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+      position: relative;
+      z-index: 2;
+      max-width: 1280px;
+    }
+    .closing h2 { font-size: 78px; max-width: 1100px; }
+    .closing-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 38px;
+      max-width: 1150px;
+    }
+    .closing-pill {
+      padding: 19px 20px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.035);
+      border-radius: 15px;
+      font-size: 15px;
+      color: #d0d0d5;
+    }
+    .closing-pill b { color: white; }
+    .closing-quote {
+      margin-top: 42px;
+      color: var(--fiap);
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: .03em;
+    }
+    .closing-name { margin-top: 38px; font-size: 18px; color: #dcdce0; }
+
+    .magenta-block {
+      position: absolute;
+      width: 440px;
+      height: 1000px;
+      right: -220px;
+      top: -70px;
+      background: linear-gradient(180deg, rgba(237,20,91,.95), rgba(116,5,47,.6));
+      transform: rotate(15deg);
+      opacity: .82;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      height: 5px;
+      background: var(--fiap);
+      width: 0;
+      transition: width .3s ease;
+      z-index: 9999;
+      box-shadow: 0 0 18px rgba(237,20,91,.7);
+    }
+
+    .controls {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10000;
+      display: flex;
+      gap: 8px;
+      opacity: .35;
+      transition: opacity .2s ease;
+    }
+    .controls:hover { opacity: 1; }
+    .control-btn {
+      border: 1px solid rgba(255,255,255,.17);
+      color: white;
+      background: rgba(10,10,12,.72);
+      padding: 10px 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+    }
+
+    .speaker-panel {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      width: min(640px, calc(100vw - 36px));
+      max-height: 36vh;
+      overflow-y: auto;
+      z-index: 10001;
+      border-radius: 16px;
+      padding: 18px 20px;
+      background: rgba(5,5,7,.94);
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 20px 50px rgba(0,0,0,.55);
+      display: none;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #d2d2d7;
+    }
+    .speaker-panel.open { display: block; }
+    .speaker-panel strong { color: var(--fiap); }
+    .speaker-notes { display: none; }
+
+    .help {
+      position: fixed;
+      inset: 0;
+      z-index: 10010;
+      display: none;
+      place-items: center;
+      background: rgba(0,0,0,.78);
+      backdrop-filter: blur(10px);
+    }
+    .help.open { display: grid; }
+    .help-card {
+      width: 560px;
+      padding: 32px;
+      border-radius: 22px;
+      background: #101014;
+      border: 1px solid rgba(255,255,255,.16);
+    }
+    .help-card h3 { margin-bottom: 20px; }
+    .shortcut { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); color: #c2c2c8; }
+    kbd { background: #24242a; border: 1px solid #3a3a42; border-radius: 6px; padding: 3px 8px; color: white; }
+
+    @media print {
+      html, body { overflow: visible; background: white; }
+      .stage { display: block; background: white; position: static; }
+      .deck { transform: none !important; width: 1600px; height: auto; box-shadow: none; overflow: visible; }
+      .slide { display: block !important; position: relative; width: 1600px; height: 900px; break-after: page; }
+      .controls, .progress, .speaker-panel, .help { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="stage">
+  <main class="deck" id="deck">
+
+    <!-- SLIDE 1 -->
+    <section class="slide active grid-bg noise" data-title="Capa">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28" aria-label="FIAP">
+          <path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/>
+          <path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/>
+        </svg>
+        <div class="brand-tag">Tech Challenge • Fase 2</div>
+      </div>
+      <div class="slide-no">01 / 08</div>
+      <div class="cover-orb"></div>
+      <div class="cover-orbit"></div>
+      <div class="hero-content">
+        <div class="cover-kicker">Engenharia de dados para políticas públicas</div>
+        <h1 class="cover-title">Pipeline híbrido para análise da <span class="pink">alfabetização</span> no Brasil</h1>
+        <p class="cover-subtitle">Batch + streaming, Arquitetura Medalhão, qualidade e inteligência analítica em Databricks.</p>
+        <div class="presenter">
+          <div class="presenter-badge">V</div>
+          <div><strong>Vinicius Naziozeno Santoro do Rio</strong><br><span class="muted">FIAP • Tech Challenge</span></div>
+        </div>
+      </div>
+      <div class="footer"><span>Apresentação executiva</span><span>2026</span></div>
+      <div class="speaker-notes">
+        <strong>Mensagem-chave:</strong> “Este projeto transforma dados educacionais fragmentados em uma plataforma confiável para acompanhamento de metas, priorização territorial e futuras aplicações de inteligência artificial.”
+      </div>
+    </section>
+
+    <!-- SLIDE 2 -->
+    <section class="slide grid-bg noise" data-title="Problema de negócio">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/><path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/></svg>
+        <div class="brand-tag">Problema de negócio</div>
+      </div>
+      <div class="slide-no">02 / 08</div>
+      <div class="two-col">
+        <div>
+          <div class="eyebrow">O desafio</div>
+          <h2>Alfabetizar até o 2º ano exige <span class="pink">visão integrada</span> dos dados.</h2>
+          <p class="lead">Indicadores, metas e microdados existem — mas em fontes, granularidades e ciclos de atualização diferentes.</p>
+          <div class="challenge-list">
+            <div class="challenge-item"><div class="challenge-icon">01</div><div><div class="challenge-title">Dados fragmentados</div><div class="challenge-text">Brasil, UFs, municípios e alunos sem uma visão única.</div></div></div>
+            <div class="challenge-item"><div class="challenge-icon">02</div><div><div class="challenge-title">Baixa velocidade de resposta</div><div class="challenge-text">Atualizações e desvios chegam tarde à tomada de decisão.</div></div></div>
+            <div class="challenge-item"><div class="challenge-icon">03</div><div><div class="challenge-title">Risco de decisões sem evidência</div><div class="challenge-text">Sem qualidade e rastreabilidade, priorizações podem ser imprecisas.</div></div></div>
+          </div>
+        </div>
+        <div class="problem-card">
+          <div class="eyebrow">Ponto de corte nacional</div>
+          <div class="big-number">743</div>
+          <div class="metric-label">pontos na escala de proficiência do Saeb para considerar uma criança alfabetizada.</div>
+          <div class="accent-line" style="margin-top:28px"></div>
+          <div style="font-size:36px;font-weight:900;line-height:1.05">Meta nacional:<br><span class="pink">todas as crianças</span><br>alfabetizadas até 2030.</div>
+          <div class="metric-foot">Fonte: Pesquisa Alfabetiza Brasil / Inep.</div>
+        </div>
+      </div>
+      <div class="footer"><span>Decisão pública depende de dados integrados, atuais e confiáveis.</span><span>FIAP</span></div>
+      <div class="speaker-notes">
+        <strong>Fala sugerida:</strong> “O problema não é ausência de dados. É a fragmentação. O gestor precisa conectar o desempenho individual, os indicadores territoriais e as metas em uma mesma visão, com qualidade e atualização suficiente para agir.”
+      </div>
+    </section>
+
+    <!-- SLIDE 3 -->
+    <section class="slide grid-bg noise" data-title="Arquitetura">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/><path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/></svg>
+        <div class="brand-tag">Arquitetura da solução</div>
+      </div>
+      <div class="slide-no">03 / 08</div>
+      <div style="position:relative;z-index:2;padding-top:64px">
+        <div class="eyebrow">Lakehouse em Databricks</div>
+        <h2 style="margin-bottom:10px">Uma pipeline híbrida, escalável e orientada à decisão.</h2>
+        <p class="lead" style="font-size:21px">Dados históricos entram em batch; atualizações entram por streaming. Tudo evolui pelas camadas Bronze, Silver e Gold.</p>
+        <div class="arch-wrap">
+          <div class="arch-row">
+            <div class="arch-card">
+              <div class="arch-label">Fontes</div>
+              <div class="arch-title">Base dos Dados</div>
+              <ul class="arch-list">
+                <li>Microdados de alunos</li>
+                <li>Indicadores municipais e estaduais</li>
+                <li>Metas Brasil, UF e município</li>
+                <li>Eventos JSON simulados</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="arch-card">
+              <div class="arch-label">Ingestão</div>
+              <div class="arch-title">Batch + Streaming</div>
+              <ul class="arch-list">
+                <li>Spark DataFrames</li>
+                <li>Structured Streaming</li>
+                <li>Trigger AvailableNow</li>
+                <li>Checkpoint incremental</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="arch-card highlight">
+              <div class="arch-label">Medalhão</div>
+              <div class="arch-title">Bronze → Silver → Gold</div>
+              <ul class="arch-list">
+                <li>Preservação do dado bruto</li>
+                <li>Tratamento e padronização</li>
+                <li>Integração entre fontes</li>
+                <li>Datasets analíticos</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="arch-card">
+              <div class="arch-label">Consumo</div>
+              <div class="arch-title">Databricks SQL</div>
+              <ul class="arch-list">
+                <li>Indicador municipal</li>
+                <li>Resumo por UF</li>
+                <li>Visão Brasil</li>
+                <li>Base de modelagem</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="arch-card">
+              <div class="arch-label">Valor</div>
+              <div class="arch-title">Decisão + IA</div>
+              <ul class="arch-list">
+                <li>Priorização territorial</li>
+                <li>Acompanhamento de metas</li>
+                <li>Análise de desigualdade</li>
+                <li>Predição de risco</li>
+              </ul>
+            </div>
+          </div>
+          <div class="observability-bar">
+            <div class="obs-item"><strong>Qualidade:</strong> completude, unicidade, domínio e integridade referencial</div>
+            <div class="obs-item"><strong>Monitoramento:</strong> status, duração, volume e histórico Delta</div>
+            <div class="obs-item"><strong>FinOps:</strong> serverless, sob demanda e sem cluster permanente</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>Apache Spark • Delta Lake • Unity Catalog • Structured Streaming</span><span>FIAP</span></div>
+      <div class="speaker-notes">
+        <strong>Fala sugerida:</strong> “A arquitetura foi desenhada como um Lakehouse no Databricks. O batch atende o histórico, o streaming demonstra atualizações incrementais e a Arquitetura Medalhão aumenta progressivamente a qualidade até chegar em uma camada Gold pronta para decisão e IA.”
+      </div>
+    </section>
+
+    <!-- SLIDE 4 -->
+    <section class="slide grid-bg noise" data-title="Entrega e escala">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/><path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/></svg>
+        <div class="brand-tag">Entrega e escala</div>
+      </div>
+      <div class="slide-no">04 / 08</div>
+      <div style="position:relative;z-index:2;padding-top:65px">
+        <div class="eyebrow">Pipeline executada de ponta a ponta</div>
+        <h2>O projeto saiu do desenho e chegou a uma <span class="pink">base analítica validada</span>.</h2>
+        <div class="stats">
+          <div class="stat primary"><em>Microdados</em><strong>3,87 mi</strong><span>registros de alunos ingeridos e tratados.</span></div>
+          <div class="stat"><em>Território</em><strong>5.551</strong><span>municípios consolidados na dimensão Silver.</span></div>
+          <div class="stat"><em>Streaming</em><strong>20</strong><span>eventos processados em dois lotes incrementais.</span></div>
+          <div class="stat"><em>Camada Gold</em><strong>24.018</strong><span>linhas no indicador analítico municipal.</span></div>
+        </div>
+        <div class="pipeline-progress">
+          <div class="step done"><b>00</b>Setup</div>
+          <div class="step done"><b>01</b>Batch</div>
+          <div class="step done"><b>02</b>Streaming</div>
+          <div class="step done"><b>03</b>Silver</div>
+          <div class="step done"><b>04</b>Gold</div>
+          <div class="step done"><b>05</b>Qualidade</div>
+          <div class="step done"><b>06</b>Monitoramento</div>
+          <div class="step done"><b>07</b>Análises</div>
+        </div>
+      </div>
+      <div class="footer"><span>Todos os notebooks executados e registrados em vídeo.</span><span>Resultados observados na execução do projeto</span></div>
+      <div class="speaker-notes">
+        <strong>Fala sugerida:</strong> “A solução foi executada de ponta a ponta. Processamos 3,87 milhões de alunos, consolidamos 5.551 municípios e produzimos uma camada Gold com mais de 24 mil combinações analíticas de município, ano e rede.”
+      </div>
+    </section>
+
+    <!-- SLIDE 5 -->
+    <section class="slide grid-bg noise" data-title="Qualidade, monitoramento e FinOps">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/><path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/></svg>
+        <div class="brand-tag">Confiança operacional</div>
+      </div>
+      <div class="slide-no">05 / 08</div>
+      <div class="quality-layout">
+        <div>
+          <div class="eyebrow">Dados confiáveis, pipeline observável</div>
+          <h2>Qualidade não foi uma etapa final. Foi um <span class="pink">mecanismo de decisão</span>.</h2>
+          <div class="quality-matrix">
+            <div class="quality-card"><div class="q-icon">✓</div><h3>Completude</h3><p>Campos obrigatórios e tabelas vazias são identificados.</p></div>
+            <div class="quality-card"><div class="q-icon">✓</div><h3>Unicidade</h3><p>Chaves de negócio e eventos duplicados são validados.</p></div>
+            <div class="quality-card"><div class="q-icon">✓</div><h3>Domínio</h3><p>Indicadores e metas são verificados entre 0 e 100.</p></div>
+            <div class="quality-card"><div class="q-icon">✓</div><h3>Integridade</h3><p>Fatos e dimensões são cruzados para detectar órfãos.</p></div>
+          </div>
+          <div class="guardrail"><strong>FinOps:</strong> Databricks Free Edition, serverless, execução sob demanda, Delta/Parquet e streaming com encerramento automático.</div>
+        </div>
+        <div class="case-panel">
+          <div>
+            <div class="eyebrow">Caso real detectado</div>
+            <div class="case-code">5219308</div>
+            <div class="case-city">Santa Helena de Goiás • GO</div>
+            <p class="muted" style="font-size:15px;line-height:1.45;margin-top:16px">O município existia nos microdados de alunos, mas não na dimensão construída inicialmente a partir da base agregada.</p>
+          </div>
+          <div class="case-arrow">
+            <div class="pill">Regra de integridade</div><div style="font-size:26px;color:var(--fiap)">→</div><div class="pill">Divergência identificada</div>
+          </div>
+          <div class="case-result"><strong>Correção aplicada:</strong> a dimensão municipal passou a combinar a fonte agregada com os municípios encontrados nos microdados — sem descartar alunos.</div>
+        </div>
+      </div>
+      <div class="footer"><span>Monitoramento: status, duração, registros, arquivos Delta e armazenamento.</span><span>FIAP</span></div>
+      <div class="speaker-notes">
+        <strong>Fala sugerida:</strong> “Um ponto importante foi a qualidade gerar uma ação real. A regra identificou um município presente nos alunos, mas ausente na dimensão. Em vez de eliminar dados, enriquecemos a dimensão e preservamos a informação. Isso demonstra governança aplicada, não apenas teórica.”
+      </div>
+    </section>
+
+    <!-- SLIDE 6 -->
+    <section class="slide grid-bg noise" data-title="Valor para stakeholders">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/><path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/></svg>
+        <div class="brand-tag">Valor da pipeline</div>
+      </div>
+      <div class="slide-no">06 / 08</div>
+      <div style="position:relative;z-index:2;padding-top:68px">
+        <div class="eyebrow">Da engenharia à política pública</div>
+        <h2>A camada Gold transforma dados em <span class="pink">prioridades acionáveis</span>.</h2>
+        <div class="value-grid">
+          <div class="value-card">
+            <div class="value-num">01 • PRIORIZAR</div>
+            <h3>Onde agir primeiro?</h3>
+            <p>Identificação dos municípios e UFs mais distantes das metas, com recorte por ano e rede de ensino.</p>
+            <div class="value-outcome"><strong>Resultado:</strong> foco territorial e alocação mais precisa de recursos.</div>
+          </div>
+          <div class="value-card">
+            <div class="value-num">02 • ACOMPANHAR</div>
+            <h3>Estamos avançando?</h3>
+            <p>Comparação entre indicador atual, meta prevista, desempenho oficial e resultado calculado pelos microdados.</p>
+            <div class="value-outcome"><strong>Resultado:</strong> transparência e monitoramento contínuo das metas.</div>
+          </div>
+          <div class="value-card">
+            <div class="value-num">03 • EXPLICAR</div>
+            <h3>Por que há desigualdade?</h3>
+            <p>Base integrada para analisar diferenças territoriais, redes, participação, proficiência e volume de alunos.</p>
+            <div class="value-outcome"><strong>Resultado:</strong> políticas desenhadas com evidências comparáveis.</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span>Indicador municipal • Resumo UF • Resumo Brasil • Base de modelagem</span><span>FIAP</span></div>
+      <div class="speaker-notes">
+        <strong>Fala sugerida:</strong> “Para a liderança, o valor está em responder três perguntas: onde agir, se estamos avançando e por que as desigualdades persistem. A Gold organiza exatamente essas respostas em diferentes níveis territoriais.”
+      </div>
+    </section>
+
+    <!-- SLIDE 7 -->
+    <section class="slide grid-bg noise" data-title="Potencial de IA">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/><path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/></svg>
+        <div class="brand-tag">Potencial de inteligência artificial</div>
+      </div>
+      <div class="slide-no">07 / 08</div>
+      <div class="ai-layout">
+        <div class="ai-core">
+          <div class="ai-ring"></div>
+          <div class="ai-circle">GOLD<br>DATASET</div>
+          <div class="ai-node n1"><b>Participação</b>Presença e cobertura</div>
+          <div class="ai-node n2"><b>Desempenho</b>Proficiência e indicador</div>
+          <div class="ai-node n3"><b>Território</b>Município, UF e rede</div>
+          <div class="ai-node n4"><b>Metas</b>Gap e cumprimento</div>
+        </div>
+        <div>
+          <div class="eyebrow">Próxima fronteira</div>
+          <h2>Antecipar risco para <span class="pink">agir antes</span>.</h2>
+          <p class="lead" style="font-size:20px">A base Gold já estrutura variáveis explicativas e alvo para modelos supervisionados e análises de vulnerabilidade.</p>
+          <div class="ai-list">
+            <div class="ai-item"><div class="ai-icon">P</div><div><b>Predição de alfabetização</b><span>Estimar o indicador futuro e a probabilidade de cumprimento da meta.</span></div></div>
+            <div class="ai-item"><div class="ai-icon">C</div><div><b>Clusters de vulnerabilidade</b><span>Agrupar municípios com padrões semelhantes de desempenho e contexto.</span></div></div>
+            <div class="ai-item"><div class="ai-icon">A</div><div><b>Alertas de deterioração</b><span>Detectar quedas relevantes e direcionar acompanhamento preventivo.</span></div></div>
+          </div>
+          <div class="guardrail"><strong>Governança de IA:</strong> explicabilidade, vieses territoriais, proteção de dados, revisão humana e monitoramento de drift.</div>
+        </div>
+      </div>
+      <div class="footer"><span>IA como apoio à decisão — não como substituição da responsabilidade pública.</span><span>FIAP</span></div>
+      <div class="speaker-notes">
+        <strong>Fala sugerida:</strong> “A IA pode transformar o acompanhamento em antecipação. Podemos prever risco de não cumprimento da meta, segmentar vulnerabilidades e gerar alertas. Mas esse uso deve ser explicável, monitorado e sempre submetido à decisão humana.”
+      </div>
+    </section>
+
+    <!-- SLIDE 8 -->
+    <section class="slide grid-bg noise" data-title="Encerramento">
+      <div class="brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path fill="#ed145b" d="M30.906.205h-2.68v27.301h2.68zM17.667 12.929H7.344v2.537h10.323z"/><path fill="#ed145b" d="M0 27.506h2.671V2.742h20.421V.205H0zM89.786.1H73.742v27.3h2.68V2.636h13.22c4.808 0 7.675 2.264 7.675 6.062v.076c0 3.692-3.177 6.176-7.9 6.176H82.85v2.537h6.452c7.388 0 10.693-4.436 10.693-8.827v-.076C99.996 3.191 96.276.1 89.794.1zM53.631 0h-2.286L34.53 27.491h2.876l15.047-24.3 7.743 12.48h3.064zM62.813 19.872l4.739 7.62h2.988l-4.686-7.62z"/></svg>
+        <div class="brand-tag">Conclusão</div>
+      </div>
+      <div class="slide-no">08 / 08</div>
+      <div class="magenta-block"></div>
+      <div class="closing">
+        <div class="eyebrow">Mensagem final</div>
+        <h2>Da fragmentação de dados à <span class="pink">decisão pública orientada por evidências</span>.</h2>
+        <p class="lead">A solução integra, qualifica e transforma dados educacionais em uma base confiável para monitorar metas, priorizar ações e preparar o uso responsável de inteligência artificial.</p>
+        <div class="closing-summary">
+          <div class="closing-pill"><b>Escalável:</b> Spark, Delta Lake e arquitetura Lakehouse.</div>
+          <div class="closing-pill"><b>Confiável:</b> regras de qualidade e rastreabilidade.</div>
+          <div class="closing-pill"><b>Eficiente:</b> serverless, sob demanda e orientada a FinOps.</div>
+        </div>
+        <div class="closing-quote">LET'S ROCK THE FUTURE.</div>
+        <div class="closing-name"><strong>Vinicius Naziozeno Santoro do Rio</strong> • Tech Challenge — Fase 2</div>
+      </div>
+      <div class="footer"><span>Obrigado.</span><span>FIAP</span></div>
+      <div class="speaker-notes">
+        <strong>Fechamento sugerido:</strong> “Em síntese, a pipeline transforma fontes heterogêneas em uma plataforma de decisão. Ela é executável, monitorável, financeiramente controlada e já deixa a camada de dados pronta para análises avançadas e IA responsável.”
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="controls">
+  <button class="control-btn" onclick="prevSlide()">←</button>
+  <button class="control-btn" onclick="nextSlide()">→</button>
+  <button class="control-btn" onclick="toggleNotes()">Notas</button>
+  <button class="control-btn" onclick="toggleFullscreen()">Tela cheia</button>
+  <button class="control-btn" onclick="toggleHelp()">?</button>
+</div>
+<div class="speaker-panel" id="speakerPanel"></div>
+<div class="help" id="help" onclick="toggleHelp()">
+  <div class="help-card" onclick="event.stopPropagation()">
+    <h3>Atalhos da apresentação</h3>
+    <div class="shortcut"><span>Próximo slide</span><kbd>→</kbd></div>
+    <div class="shortcut"><span>Slide anterior</span><kbd>←</kbd></div>
+    <div class="shortcut"><span>Notas do apresentador</span><kbd>N</kbd></div>
+    <div class="shortcut"><span>Tela cheia</span><kbd>F</kbd></div>
+    <div class="shortcut"><span>Imprimir / salvar em PDF</span><kbd>Ctrl + P</kbd></div>
+    <div class="shortcut"><span>Fechar ajuda</span><kbd>Esc</kbd></div>
+  </div>
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const deck = document.getElementById('deck');
+  const progress = document.getElementById('progress');
+  const notesPanel = document.getElementById('speakerPanel');
+  const help = document.getElementById('help');
+  let current = 0;
+
+  function scaleDeck() {
+    const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+    deck.style.transform = `scale(${scale})`;
+  }
+
+  function showSlide(index) {
+    current = Math.max(0, Math.min(slides.length - 1, index));
+    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+    progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+    updateNotes();
+    document.title = `${current + 1}/${slides.length} — ${slides[current].dataset.title}`;
+  }
+
+  function nextSlide() { showSlide(current + 1); }
+  function prevSlide() { showSlide(current - 1); }
+
+  function updateNotes() {
+    const notes = slides[current].querySelector('.speaker-notes');
+    notesPanel.innerHTML = notes ? notes.innerHTML : '<strong>Sem notas.</strong>';
+  }
+
+  function toggleNotes() {
+    notesPanel.classList.toggle('open');
+    updateNotes();
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  function toggleHelp() { help.classList.toggle('open'); }
+
+  window.addEventListener('resize', scaleDeck);
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+    if (e.key.toLowerCase() === 'n') toggleNotes();
+    if (e.key.toLowerCase() === 'f') toggleFullscreen();
+    if (e.key === 'Home') showSlide(0);
+    if (e.key === 'End') showSlide(slides.length - 1);
+    if (e.key === 'Escape') help.classList.remove('open');
+    if (e.key === '?') toggleHelp();
+  });
+
+  let touchStartX = null;
+  window.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive:true});
+  window.addEventListener('touchend', e => {
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(dx) > 60) dx < 0 ? nextSlide() : prevSlide();
+    touchStartX = null;
+  }, {passive:true});
+
+  scaleDeck();
+  showSlide(0);
+</script>
+</body>
+</html>
