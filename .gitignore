@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Databricks
+.databricks/
+
+# Variáveis de ambiente e credenciais
+.env
+*.pem
+*.key
+credentials.json
+service-account.json
+
+# Dados locais
+data/raw/
+data/processed/
+data/*.csv
+data/*.parquet
+data/*.json
+
+# Logs
+*.log
+logs/
+
+# Checkpoints locais
+checkpoints/
